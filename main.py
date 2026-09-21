@@ -16,12 +16,13 @@ CamZoom = 1
 CamOffsets = pygame.Vector2(width / -2, height / -2)
 
 # Environment setting
-mapSize = pygame.Vector2(500, 500)
-nodeCount = 8
+mapSize = pygame.Vector2(800, 800)
+nodeCount = 4
 nodeSize = 5
 
-#Optimization
-doDraw = False
+# Optimization
+doDraw = True
+
 
 class Node:
     def __init__(self, ID: int):
@@ -49,8 +50,9 @@ def render(base):
 
 
 # draw borders, node etc
-def draw(route, ForceDraw : bool):
-    if not ForceDraw and not doDraw: return
+def draw(route, ForceDraw: bool):
+    if not ForceDraw and not doDraw:
+        return
 
     routeColor = "grey"
     routeWidth = 2
@@ -94,33 +96,24 @@ def draw(route, ForceDraw : bool):
     # Flip
     pygame.display.flip()
 
-    # Emergency exit (Not scuffed at all)
+
+# Return wheter the program should quit or not
+def quitInterrupt():
+    Quitting = False
+    # Quit
     for event in pygame.event.get():
-        if event.type == pygame.QUIT: pygame.quit()
+        if event.type == pygame.QUIT:
+            Quitting = True
 
-    # # Camera movement (Dont work because I am stupid)
-    # keys = pygame.key.get_pressed()
-    # if keys[pygame.K_w]:
-    #     CamOffsets.y += CamSensitivity / CamZoom
-    # if keys[pygame.K_s]:
-    #     CamOffsets.y -= CamSensitivity / CamZoom
-    # if keys[pygame.K_a]:
-    #     CamOffsets.x -= CamSensitivity / CamZoom
-    # if keys[pygame.K_d]:
-    #     CamOffsets.x += CamSensitivity / CamZoom
-
-    # if keys[pygame.K_q]:
-    #     CamZoom += CamSensitivity / 500
-    # if keys[pygame.K_e]:
-    #     CamZoom -= CamSensitivity / 500
+    return Quitting
 
 
-# function to check the distance of the route, input a list of object as a path from first index to last index
+# Function to check the distance of the route, input a list of object as a path from first index to last index
 def checkDist(route: list[Node]):
     totalDist = 0
     for i in range(len(route) - 1):
         totalDist += route[i].location.distance_to(route[i + 1].location)
-    # return home
+    # Return home
     totalDist += route[-1].location.distance_to(route[0].location)
     return totalDist
 
@@ -128,6 +121,7 @@ def checkDist(route: list[Node]):
 # =============================================================================================
 # ==================Test part(AI generated for prototyping, please fix later)======================
 # =============================================================================================
+
 
 def brute_force_tsp(nodes):
     """
@@ -144,7 +138,7 @@ def brute_force_tsp(nodes):
 
     def permute(remaining, current):
         nonlocal iterationCount
-        # base case: no more cities to place, evaluate this full route
+        # Base case: no more cities to place, evaluate this full route
         if not remaining:
             iterationCount += 1
             route = [home] + current
@@ -154,18 +148,24 @@ def brute_force_tsp(nodes):
                 best_route[0] = route
             return
 
-        # try each remaining city as the next step
+        # Try each remaining city as the next step
         for i in range(len(remaining)):
             next_city = remaining[i]
             new_remaining = remaining[:i] + remaining[i + 1 :]  # delete chosen city
             current.append(next_city)  # insert into partial route
             permute(new_remaining, current)
             current.pop()  # backtrack: undo insert before trying next option
-            try: draw([home] + current, False)
-            except: pass
+            try:
+                draw([home] + current, False)
+            except:
+                pass
+
+        if quitInterrupt():
+            pygame.quit()
 
     permute(others, [])
     return best_route[0], best_length[0], iterationCount
+
 
 # =============================================================================================
 # =============================================================================================
@@ -173,18 +173,14 @@ def brute_force_tsp(nodes):
 
 
 # --Main--
-def main():
+waitQuit = False
+if __name__ == "__main__":
 
     Result = brute_force_tsp(nodeList)
     route = Result[0]
-    draw(route, True)
     print(f"TotalDist = {Result[1]}, Iteration = {Result[2]}")
 
-main()
-
-# Quit
-waitQuit = True
-while waitQuit:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT: waitQuit = False
-pygame.quit()
+    while not waitQuit:
+        # Draw on screen
+        draw(route, True)
+        waitQuit = quitInterrupt()
