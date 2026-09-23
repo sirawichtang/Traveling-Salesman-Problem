@@ -21,11 +21,13 @@ CamOffsets = pygame.Vector2(width / -2, height / -2)
 random.seed(None)
 
 mapSize = pygame.Vector2(800, 800)
-nodeCount = 8
+nodeCount = 11
 nodeSize = 5
 
 # Optimization
 doDraw = True
+
+tickrate = 1/20
 
 
 class Node:
@@ -121,6 +123,9 @@ def quitInterrupt():
 
     return Quitting
 
+def waitKey():
+    pass
+
 
 # Function to check the distance of the route, input a list of object as a path from first index to last index
 def checkDist(route: list[Node]):
@@ -162,6 +167,11 @@ def brute_force_tsp(nodes):
                 best_length = length
                 best_route = route[:]
 
+                # Draw the newest best route.
+                draw(best_route, iterationCount, "Brute Force", best_length, False)
+                if doDraw : time.sleep(tickrate)
+                
+
             return
 
         # Try each remaining city as the next step
@@ -171,10 +181,6 @@ def brute_force_tsp(nodes):
             current.append(next_city)  # insert into partial route
             permute(new_remaining, current)
             current.pop()  # backtrack: undo insert before trying next option
-            try:
-                draw([home] + current, iterationCount, "Brute Force", best_length, False)
-            except:
-                pass
 
         if quitInterrupt():
             pygame.quit()
@@ -190,7 +196,6 @@ def ant_colony_tsp(
     evaporation: float = 0.5,
     alpha: float = 1.0,  # Chance ant will follow pheromone
     beta: float = 3.0,  # How strongly ants prefer closer node
-    tickrate: float = 1 / 5,
 ):
     """
     Returns (best_route, best_length, iteration_count).
@@ -306,18 +311,16 @@ waitQuit = False
 if __name__ == "__main__":
 
     Result = brute_force_tsp(nodeList)
-    route = Result[0]
     print(f"TotalDist = {Result[1]}, Iteration = {Result[2]}")
 
     # Draw on screen
-    draw(route, Result[2], "Brute Force", Result[1], True)
+    draw(Result[0], Result[2], "Brute Force", Result[1], True)
     time.sleep(5)
 
     Result = ant_colony_tsp(nodeList)
-    route = Result[0]
     print(f"TotalDist = {Result[1]}, Iteration = {Result[2]}")
 
     while not waitQuit:
         # Draw on screen
-        draw(route, Result[2], "ACO", Result[1], True)
+        draw(Result[0], Result[2], "ACO", Result[1], True)
         waitQuit = quitInterrupt()
