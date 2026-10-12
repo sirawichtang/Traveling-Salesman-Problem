@@ -14,10 +14,11 @@ def main():
     # Algorithm
 
     for name, fn in (
-        ("Brute Force", algorithm.brute_force_tsp),
-        ("ACO", algorithm.ant_colony_tsp),
-        ("Nearest Neighbor", algorithm.nearest_neighbor_tsp),
-        ("Held-Karp", algorithm.held_karp_tsp),
+        # ("Brute Force", algorithm.brute_force_tsp),
+        # ("ACO", algorithm.ant_colony_tsp),
+        # ("Nearest Neighbor", algorithm.nearest_neighbor_tsp),
+        # ("Held-Karp", algorithm.held_karp_tsp),
+        ("two-opt", algorithm.two_opt_tsp),
     ):
         Result = fn(nodeList)
         print(f"{name}: TotalDist = {Result[1]}, Iteration = {Result[2]}")
