@@ -183,3 +183,65 @@ def ant_colony_tsp(
             pygame.quit()
 
     return best_route, best_length, completed_iterations
+
+def nearest_neighbor_tsp(nodeList: list[Node]):
+    """Greedy: from home, always go to the closest unvisited node. O(n^2), not optimal."""
+    route = [next(n for n in nodeList if n.ID == 0)]
+    unvisited = [n for n in nodeList if n.ID != 0]
+    steps = 0
+
+    while unvisited:
+        nearest = min(unvisited, key=lambda n: route[-1].location.distance_to(n.location))
+        unvisited.remove(nearest)
+        route.append(nearest)
+        steps += 1
+
+        draw(nodeList, route, steps, "Nearest Neighbor", checkDist(route), False)
+        if config.doDraw: time.sleep(config.tickrate)
+        if gameSystem.quitInterrupt():
+            pygame.quit()
+
+    return route, checkDist(route), steps
+
+
+def held_karp_tsp(nodeList: list[Node]):
+    """
+    Exact DP. dp[(mask, j)] = shortest path from home, visiting the set `mask`
+    of nodes, ending at j. O(n^2 * 2^n) time, O(n * 2^n) memory.
+    """
+    home = next(n for n in nodeList if n.ID == 0)
+    others = [n for n in nodeList if n.ID != 0]
+    n = len(others)
+    d = lambda a, b: a.location.distance_to(b.location)
+
+    if n == 0:
+        return [home], 0.0, 0
+
+    dp = {(1 << j, j): (d(home, others[j]), None) for j in range(n)}  # (cost, previous node)
+    steps = 0
+
+    for mask in range(1, 1 << n):
+        for j in range(n):
+            if not mask & (1 << j) or (mask, j) in dp:
+                continue
+            prev_mask = mask ^ (1 << j)
+            dp[(mask, j)] = min(
+                (dp[(prev_mask, k)][0] + d(others[k], others[j]), k)
+                for k in range(n) if prev_mask & (1 << k)
+            )
+            steps += 1
+        if gameSystem.quitInterrupt():
+            pygame.quit()
+
+    full = (1 << n) - 1
+    cost, last = min((dp[(full, j)][0] + d(others[j], home), j) for j in range(n))
+
+    # Walk back through the stored predecessors to rebuild the route
+    route, mask = [], full
+    while last is not None:
+        route.append(others[last])
+        mask, last = mask ^ (1 << last), dp[(mask, last)][1]
+    route = [home] + route[::-1]
+
+    draw(nodeList, route, steps, "Held-Karp", cost, False)
+    return route, cost, steps
