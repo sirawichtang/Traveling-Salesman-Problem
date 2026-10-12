@@ -50,7 +50,6 @@ def brute_force_tsp(nodeList):
 
                 # Draw the newest best route.
                 draw(nodeList, best_route, iterationCount, "Brute Force", best_length, False)
-                if config.doDraw : time.sleep(config.tickrate)
                 
 
             return
@@ -73,25 +72,15 @@ def brute_force_tsp(nodeList):
 def ant_colony_tsp(
     nodeList: list[Node],
     iterations: int = 100,
-    ant_count: int | None = None,
+    ant_count: int | None = None, # When set to None, Will use nodeCount
     evaporation: float = 0.5,
     alpha: float = 1.0,  # Chance ant will follow pheromone
     beta: float = 3.0,  # How strongly ants prefer closer node
 ):
-    """
-    Returns (best_route, best_length, iteration_count).
-    The returned route starts with the home node and works with draw().
-    """
-    if not nodeList:
-        raise ValueError("The node list cannot be empty.")
-
     home_index = next(
         (index for index, node in enumerate(nodeList) if node.ID == 0),
         None,
     )
-
-    if home_index is None:
-        raise ValueError("A home node with ID == 0 is required.")
 
     if len(nodeList) == 1:
         return [nodeList[home_index]], 0.0, 0
@@ -158,7 +147,8 @@ def ant_colony_tsp(
 
                 # Draw the newest best route.
                 draw(nodeList, best_route, completed_iterations, "ACO", best_length, False)
-                if config.doDraw : time.sleep(config.tickrate)
+
+            completed_iterations += 1
 
         # Evaporate pheromone.
         for i in range(node_total):
@@ -177,8 +167,6 @@ def ant_colony_tsp(
                 pheromone[current][next_node] += deposit
                 pheromone[next_node][current] += deposit
 
-        completed_iterations += 1
-
         if gameSystem.quitInterrupt():
             pygame.quit()
 
@@ -196,8 +184,8 @@ def nearest_neighbor_tsp(nodeList: list[Node]):
         route.append(nearest)
         steps += 1
 
+        # Draw the newest best route.
         draw(nodeList, route, steps, "Nearest Neighbor", checkDist(route), False)
-        if config.doDraw: time.sleep(config.tickrate)
         if gameSystem.quitInterrupt():
             pygame.quit()
 
@@ -243,5 +231,6 @@ def held_karp_tsp(nodeList: list[Node]):
         mask, last = mask ^ (1 << last), dp[(mask, last)][1]
     route = [home] + route[::-1]
 
+    # Draw the newest best route.
     draw(nodeList, route, steps, "Held-Karp", cost, False)
     return route, cost, steps

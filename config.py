@@ -17,10 +17,8 @@ CamOffsets = pygame.Vector2(width / -2, height / -2)
 random.seed(None)
 
 mapSize = pygame.Vector2(800, 800)
-nodeCount = 11
+nodeCount = 10
 nodeSize = 5
 
 # Optimization
 doDraw = True
-
-tickrate = 1/20
