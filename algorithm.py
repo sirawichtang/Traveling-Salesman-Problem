@@ -8,7 +8,6 @@ from rendering import draw
 import config
 import gameSystem
 
-
 # Function to check the distance of the route, input a list of object as a path from first index to last index
 def checkDist(route: list[Node]):
     totalDist = 0
@@ -50,14 +49,9 @@ def brute_force_tsp(nodeList):
                 best_route = route[:]
 
                 # Draw the newest best route.
-                draw(
-                    nodeList,
-                    best_route,
-                    iterationCount,
-                    "Brute Force",
-                    best_length,
-                    False,
-                )
+                draw(nodeList, best_route, iterationCount, "Brute Force", best_length, False)
+                if config.doDraw : time.sleep(config.tickrate)
+                
 
             return
 
@@ -75,19 +69,28 @@ def brute_force_tsp(nodeList):
     permute(others, [])
     return best_route, best_length, iterationCount
 
-
 def ant_colony_tsp(
     nodeList: list[Node],
     iterations: int = 100,
-    ant_count: int | None = None,  # When set to None, Will use nodeCount
+    ant_count: int | None = None,
     evaporation: float = 0.5,
     alpha: float = 1.0,  # Chance ant will follow pheromone
     beta: float = 3.0,  # How strongly ants prefer closer node
 ):
+    """
+    Returns (best_route, best_length, iteration_count).
+    The returned route starts with the home node and works with draw().
+    """
+    if not nodeList:
+        raise ValueError("The node list cannot be empty.")
+
     home_index = next(
         (index for index, node in enumerate(nodeList) if node.ID == 0),
         None,
     )
+
+    if home_index is None:
+        raise ValueError("A home node with ID == 0 is required.")
 
     if len(nodeList) == 1:
         return [nodeList[home_index]], 0.0, 0
@@ -99,10 +102,7 @@ def ant_colony_tsp(
     node_total = len(nodeList)
 
     distances = [
-        [
-            nodeList[i].location.distance_to(nodeList[j].location)
-            for j in range(node_total)
-        ]
+        [nodeList[i].location.distance_to(nodeList[j].location) for j in range(node_total)]
         for i in range(node_total)
     ]
 
@@ -156,16 +156,8 @@ def ant_colony_tsp(
                 best_length = length
 
                 # Draw the newest best route.
-                draw(
-                    nodeList,
-                    best_route,
-                    completed_iterations,
-                    "ACO",
-                    best_length,
-                    False,
-                )
-
-            completed_iterations += 1
+                draw(nodeList, best_route, completed_iterations, "ACO", best_length, False)
+                if config.doDraw : time.sleep(config.tickrate)
 
         # Evaporate pheromone.
         for i in range(node_total):
@@ -184,121 +176,9 @@ def ant_colony_tsp(
                 pheromone[current][next_node] += deposit
                 pheromone[next_node][current] += deposit
 
+        completed_iterations += 1
+
         if gameSystem.quitInterrupt():
             pygame.quit()
 
     return best_route, best_length, completed_iterations
-
-
-def nearest_neighbor_tsp(nodeList: list[Node]):
-    """Greedy: from home, always go to the closest unvisited node. O(n^2), not optimal."""
-    route = [next(n for n in nodeList if n.ID == 0)]
-    unvisited = [n for n in nodeList if n.ID != 0]
-    steps = 0
-
-    while unvisited:
-        nearest = min(
-            unvisited, key=lambda n: route[-1].location.distance_to(n.location)
-        )
-        unvisited.remove(nearest)
-        route.append(nearest)
-        steps += 1
-
-        # Draw the newest best route.
-        draw(nodeList, route, steps, "Nearest Neighbor", checkDist(route), False)
-        if gameSystem.quitInterrupt():
-            pygame.quit()
-
-    return route, checkDist(route), steps
-
-
-def held_karp_tsp(nodeList: list[Node]):
-    """
-    Exact DP. dp[(mask, j)] = shortest path from home, visiting the set `mask`
-    of nodes, ending at j. O(n^2 * 2^n) time, O(n * 2^n) memory.
-    """
-    home = next(n for n in nodeList if n.ID == 0)
-    others = [n for n in nodeList if n.ID != 0]
-    n = len(others)
-    d = lambda a, b: a.location.distance_to(b.location)
-
-    if n == 0:
-        return [home], 0.0, 0
-
-    dp = {
-        (1 << j, j): (d(home, others[j]), None) for j in range(n)
-    }  # (cost, previous node)
-    steps = 0
-
-    for mask in range(1, 1 << n):
-        for j in range(n):
-            if not mask & (1 << j) or (mask, j) in dp:
-                continue
-            prev_mask = mask ^ (1 << j)
-            dp[(mask, j)] = min(
-                (dp[(prev_mask, k)][0] + d(others[k], others[j]), k)
-                for k in range(n)
-                if prev_mask & (1 << k)
-            )
-            steps += 1
-        if gameSystem.quitInterrupt():
-            pygame.quit()
-
-    full = (1 << n) - 1
-    cost, last = min((dp[(full, j)][0] + d(others[j], home), j) for j in range(n))
-
-    # Walk back through the stored predecessors to rebuild the route
-    route, mask = [], full
-    while last is not None:
-        route.append(others[last])
-        mask, last = mask ^ (1 << last), dp[(mask, last)][1]
-    route = [home] + route[::-1]
-
-    # Draw the newest best route.
-    draw(nodeList, route, steps, "Held-Karp", cost, False)
-    return route, cost, steps
-
-
-def two_opt_tsp(nodeList):
-
-    home = next(n for n in nodeList if n.ID == 0)
-    others = [n for n in nodeList if n.ID != 0]
-
-    # Random initial seed, home always stays at index 0
-    best_route = [home] + random.sample(others, len(others))
-    best_length = checkDist(best_route)
-
-    iterationCount = 0
-    improved = True
-
-    # Keep doing full passes until a pass finds no shorter route
-    while improved:
-        improved = False
-        iterationCount += 1
-        seed = best_route[:]
-
-        # Try reversing every segment seed[i..j] (start at 1 so home is never moved)
-        for i in range(1, len(seed) - 1):
-            for j in range(i + 1, len(seed)):
-                route = seed[:i] + seed[i : j + 1][::-1] + seed[j + 1 :]
-                length = checkDist(route)
-
-                if length < best_length:
-                    best_length = length
-                    best_route = route
-                    improved = True
-
-                    # Draw the newest best route.
-                    draw(
-                        nodeList,
-                        best_route,
-                        iterationCount,
-                        "2-opt",
-                        best_length,
-                        False,
-                    )
-
-        if gameSystem.quitInterrupt():
-            pygame.quit()
-
-    return best_route, best_length, iterationCount
