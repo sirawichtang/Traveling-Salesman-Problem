@@ -69,6 +69,59 @@ def brute_force_tsp(nodeList):
     permute(others, [])
     return best_route, best_length, iterationCount
 
+def greedy_tsp(nodeList):
+    """
+    Greedy heuristic: from the current city, scan its row of the distance
+    matrix and move to the cheapest unvisited city. O(n^2), not optimal.
+    Returns (best_route, best_length, iterationCount).
+    """
+    home_index = next(i for i, n in enumerate(nodeList) if n.ID == 0)
+    node_total = len(nodeList)
+
+    # Build the distance matrix tsp[i][j]
+    tsp = [
+        [nodeList[i].location.distance_to(nodeList[j].location) for j in range(node_total)]
+        for i in range(node_total)
+    ]
+
+    # Start from the home city
+    visited = [False] * node_total
+    visited[home_index] = True
+    route_indices = [home_index]
+    route = [nodeList[home_index]]
+    total = 0
+    iterationCount = 0
+
+    i = home_index
+    while len(route_indices) < node_total:
+        min_cost = math.inf
+        next_index = None
+
+        # Check all paths from the ith city, keep the cheapest unvisited one
+        for j in range(node_total):
+            if j != i and not visited[j] and tsp[i][j] < min_cost:
+                min_cost = tsp[i][j]
+                next_index = j
+
+        total += min_cost
+        visited[next_index] = True
+        route_indices.append(next_index)
+        i = next_index
+        iterationCount += 1
+
+        route = [nodeList[k] for k in route_indices]
+
+        # Draw the current route (length includes the trip back home).
+        draw(nodeList, route, iterationCount, "Greedy", total + tsp[i][home_index], False)
+
+        if gameSystem.quitInterrupt():
+            pygame.quit()
+
+    # Return to the city we started from
+    total += tsp[i][home_index]
+
+    return route, total, iterationCount
+
 def ant_colony_tsp(
     nodeList: list[Node],
     iterations: int = 100,
@@ -182,3 +235,109 @@ def ant_colony_tsp(
             pygame.quit()
 
     return best_route, best_length, completed_iterations
+
+def nearest_neighbor_tsp(nodeList: list[Node]):
+    """Greedy: from home, always go to the closest unvisited node. O(n^2), not optimal."""
+    route = [next(n for n in nodeList if n.ID == 0)]
+    unvisited = [n for n in nodeList if n.ID != 0]
+    steps = 0
+
+    while unvisited:
+        nearest = min(unvisited, key=lambda n: route[-1].location.distance_to(n.location))
+        unvisited.remove(nearest)
+        route.append(nearest)
+        steps += 1
+
+        # Draw the newest best route.
+        draw(nodeList, route, steps, "Nearest Neighbor", checkDist(route), False)
+        if gameSystem.quitInterrupt():
+            pygame.quit()
+
+    return route, checkDist(route), steps
+
+
+def held_karp_tsp(nodeList: list[Node]):
+    """
+    Exact DP. dp[(mask, j)] = shortest path from home, visiting the set `mask`
+    of nodes, ending at j. O(n^2 * 2^n) time, O(n * 2^n) memory.
+    """
+    home = next(n for n in nodeList if n.ID == 0)
+    others = [n for n in nodeList if n.ID != 0]
+    n = len(others)
+    d = lambda a, b: a.location.distance_to(b.location)
+
+    if n == 0:
+        return [home], 0.0, 0
+
+    dp = {(1 << j, j): (d(home, others[j]), None) for j in range(n)}  # (cost, previous node)
+    steps = 0
+
+    for mask in range(1, 1 << n):
+        for j in range(n):
+            if not mask & (1 << j) or (mask, j) in dp:
+                continue
+            prev_mask = mask ^ (1 << j)
+            dp[(mask, j)] = min(
+                (dp[(prev_mask, k)][0] + d(others[k], others[j]), k)
+                for k in range(n) if prev_mask & (1 << k)
+            )
+            steps += 1
+        if gameSystem.quitInterrupt():
+            pygame.quit()
+
+    full = (1 << n) - 1
+    cost, last = min((dp[(full, j)][0] + d(others[j], home), j) for j in range(n))
+
+    # Walk back through the stored predecessors to rebuild the route
+    route, mask = [], full
+    while last is not None:
+        route.append(others[last])
+        mask, last = mask ^ (1 << last), dp[(mask, last)][1]
+    route = [home] + route[::-1]
+
+    # Draw the newest best route.
+    draw(nodeList, route, steps, "Held-Karp", cost, False)
+    return route, cost, steps
+
+
+def two_opt_tsp(nodeList):
+    """
+    nodes: list of Node objects, must include the Home node (ID == 0).
+    Starts from a random route, then keeps reversing segments while it makes the route shorter.
+    Returns (best_route, best_length, iteration_count).
+    """
+    home = next(n for n in nodeList if n.ID == 0)
+    others = [n for n in nodeList if n.ID != 0]
+
+    # Random initial seed, home always stays at index 0
+    best_route = [home] + random.sample(others, len(others))
+    best_length = checkDist(best_route)
+
+    iterationCount = 0
+    improved = True
+
+    # Keep doing full passes until a pass finds no shorter route
+    while improved:
+        improved = False
+        iterationCount += 1
+        seed = best_route[:]
+
+        # Try reversing every segment seed[i..j] (start at 1 so home is never moved)
+        for i in range(1, len(seed) - 1):
+            for j in range(i + 1, len(seed)):
+                route = seed[:i] + seed[i : j + 1][::-1] + seed[j + 1 :]
+                length = checkDist(route)
+
+                if length < best_length:
+                    best_length = length
+                    best_route = route
+                    improved = True
+
+                    # Draw the newest best route.
+                    draw(nodeList, best_route, iterationCount, "2-opt", best_length, False)
+                    if config.doDraw : time.sleep(config.tickrate)
+
+        if gameSystem.quitInterrupt():
+            pygame.quit()
+
+    return best_route, best_length, iterationCount
