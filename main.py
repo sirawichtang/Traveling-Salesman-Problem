@@ -1,25 +1,22 @@
 import time
 
-import algorithm
 import node
 import config
 from rendering import draw
 import gameSystem
+from benchmark import ALGORITHMS, run_benchmarks
 
 
 # --Main--
 def main():
+    if config.benchmarkMode:
+        run_benchmarks()
+        return
+
     nodeList = node.generateNode(config.nodeCount)
 
     # Algorithm
-
-    for name, fn in (
-        # ("Brute Force", algorithm.brute_force_tsp),
-        # ("ACO", algorithm.ant_colony_tsp),
-        # ("Nearest Neighbor", algorithm.nearest_neighbor_tsp),
-        # ("Held-Karp", algorithm.held_karp_tsp),
-        ("two-opt", algorithm.two_opt_tsp),
-    ):
+    for name, fn in ALGORITHMS:
         Result = fn(nodeList)
         print(f"{name}: TotalDist = {Result[1]}, Iteration = {Result[2]}")
         draw(nodeList, Result[0], Result[2], name, Result[1], True)

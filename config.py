@@ -17,8 +17,23 @@ CamOffsets = pygame.Vector2(width / -2, height / -2)
 random.seed(None)
 
 mapSize = pygame.Vector2(800, 800)
-nodeCount = 8
+nodeCount = 10
 nodeSize = 5
+
+# Benchmark settings
+benchmarkMode = True
+benchmarkStartNodeCount = 1 #Start
+benchmarkEndNodeCount = 30 #Stop
+benchmarkStepCount = 3 #Step
+benchmarkRepeats = 3 #repeat per nodeCount
+benchmarkMaxNodeCount = {
+    "Brute Force": 10,
+    "ACO": 30,
+    "Nearest Neighbor": 30,
+    "Held-Karp": 16,
+    "two-opt": 30,
+}
+benchmarkResultsFile = "benchmark_results.csv"
 
 # Optimization
 doDraw = True
