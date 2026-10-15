@@ -23,15 +23,15 @@ nodeSize = 5
 # Benchmark settings
 benchmarkMode = True
 benchmarkStartNodeCount = 1 #Start
-benchmarkEndNodeCount = 30 #Stop
-benchmarkStepCount = 3 #Step
+benchmarkEndNodeCount = 100 #Stop
+benchmarkStepCount = 1 #Step
 benchmarkRepeats = 3 #repeat per nodeCount
 benchmarkMaxNodeCount = {
-    "Brute Force": 10,
-    "ACO": 30,
-    "Nearest Neighbor": 30,
+    "Brute Force": 11,
+    "ACO": 100,
+    "Nearest Neighbor": 100,
     "Held-Karp": 16,
-    "two-opt": 30,
+    "two-opt": 100,
 }
 benchmarkResultsFile = "benchmark_results.csv"
 
