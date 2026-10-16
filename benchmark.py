@@ -1,20 +1,11 @@
 import csv
 import time
 
-import algorithm
 import config
 import node
 
-ALGORITHMS = (
-    ("Brute Force", algorithm.brute_force_tsp),
-    ("ACO", algorithm.ant_colony_tsp),
-    ("Nearest Neighbor", algorithm.nearest_neighbor_tsp),
-    ("Held-Karp", algorithm.held_karp_tsp),
-    ("two-opt", algorithm.two_opt_tsp),
-)
 
-
-def run_benchmarks():
+def run_benchmarks(algorithms):
     start_count = config.benchmarkStartNodeCount
     end_count = config.benchmarkEndNodeCount
     step_size = config.benchmarkStepCount
@@ -28,7 +19,7 @@ def run_benchmarks():
     }
     summaries = {
         name: {"completed": 0, "skipped": 0, "elapsed_seconds": 0.0}
-        for name, _ in ALGORITHMS
+        for name, _, _ in algorithms
     }
 
     # making csv file
@@ -50,7 +41,7 @@ def run_benchmarks():
         writer.writeheader()
 
         total_cases = len(node_counts) * repeats
-        for name, algorithm_fn in ALGORITHMS:
+        for name, algorithm_fn, kwargs in algorithms:
             print(f"Starting {name} benchmark.")
             for count_index, node_count in enumerate(node_counts, start=1):
                 for repeat, node_list in enumerate(test_cases[node_count], start=1):
@@ -67,7 +58,7 @@ def run_benchmarks():
                         continue
 
                     started_at = time.perf_counter()
-                    _, total_distance, iterations = algorithm_fn(node_list)
+                    _, total_distance, iterations = algorithm_fn(node_list, **kwargs)
                     elapsed_seconds = time.perf_counter() - started_at
                     writer.writerow(
                         {

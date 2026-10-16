@@ -27,11 +27,17 @@ benchmarkEndNodeCount = 100 #Stop
 benchmarkStepCount = 1 #Step
 benchmarkRepeats = 3 #repeat per nodeCount
 benchmarkMaxNodeCount = {
-    "Brute Force": 11,
-    "ACO": 100,
+    "Brute Force": 12,
     "Nearest Neighbor": 100,
-    "Held-Karp": 16,
+    "Held-Karp": 20,
     "two-opt": 100,
+    # "ACO (30 iterations)": 100,
+    # "ACO (25 iterations)": 100,
+    "ACO (20 iterations)": 100,
+    # "ACO (15 iterations)": 100,
+    # "ACO (10 iterations)": 100,
+    # "ACO (5 iterations)": 100,
+
 }
 benchmarkResultsFile = "benchmark_results.csv"
 

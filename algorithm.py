@@ -78,7 +78,7 @@ def brute_force_tsp(nodeList):
 
 def ant_colony_tsp(
     nodeList: list[Node],
-    iterations: int = 100,
+    iterations: int = 100, # Value greater than 20 is so nelegable that it is not worth using
     ant_count: int | None = None,  # When set to None, Will use nodeCount
     evaporation: float = 0.5,
     alpha: float = 1.0,  # Chance ant will follow pheromone
