@@ -20,15 +20,11 @@ def checkDist(route: list[Node]):
 
 
 # =============================================================================================
-# ==================Test part(AI generated for prototyping, please fix later)======================
+# ========================================Algorithm============================================
 # =============================================================================================
 
 
 def brute_force_tsp(nodeList):
-    """
-    nodes: list of Node objects, must include the Home node (ID == 0).
-    Returns (best_route, best_length).
-    """
     home = next(n for n in nodeList if n.ID == 0)
     others = [n for n in nodeList if n.ID != 0]
 
@@ -74,6 +70,31 @@ def brute_force_tsp(nodeList):
 
     permute(others, [])
     return best_route, best_length, iterationCount
+
+# pseudocode for brute force
+
+# start = nodes[0]
+# others = nodes[1 .. n−1]
+# orderings = all permutations of possible route (n-1)!
+
+# bestLength = inf
+# bestRoute = none
+
+# FOR EACH ordering IN orderings {
+#     route = [start] + ordering + [start]       // start , .. , start
+
+#     length = 0
+#     FOR i = 0 TO size(route) − 2 {
+#         length = length + dist[route[i]][route[i+1]]
+#     }
+
+#     IF length < bestLength {
+#         bestLength = length
+#         bestRoute = route
+#     }
+# }
+
+# RETURN bestRoute, bestLength
 
 
 def ant_colony_tsp(
@@ -167,13 +188,13 @@ def ant_colony_tsp(
 
             completed_iterations += 1
 
-        # Evaporate pheromone.
+        # remove pheromone.
         for i in range(node_total):
             for j in range(node_total):
                 pheromone[i][j] *= 1.0 - evaporation
                 pheromone[i][j] = max(pheromone[i][j], 0.000001)
 
-        # Deposit pheromone for every ant's route.
+        # deposit pheromone
         for route, length in iteration_routes:
             deposit = 1.0 / max(length, 0.000001)
 
@@ -188,6 +209,65 @@ def ant_colony_tsp(
             pygame.quit()
 
     return best_route, best_length, completed_iterations
+
+# pseudocode for ACO
+
+# n = size(cities)
+# home = cities[0]
+# iterations = 20
+
+# FOR every pair (i, j) {
+#     pheromone[i][j] = 1.0
+# }
+
+# bestLength = ∞
+# bestRoute = none
+
+# REPEAT iterations TIMES {
+#     routes = empty list
+
+#     FOR ant = 1 TO antCount DO
+#         // Build one route
+#         route = [home]
+#         unvisited = all cities except home
+
+#         WHILE unvisited is not empty {
+#             current = last city in route
+
+#             FOR EACH c IN unvisited {
+#                 score[c] = pheromone[current][c]^alpha × (1 / dist[current][c])^beta
+#             }
+
+#             next = random city from unvisited, chosen with probability ∝ score[c]
+#             append next to route
+#             remove next from unvisited
+#         }
+
+#         length = routeLength(route)
+#         add (route, length) to routes
+
+#         IF length < bestLength {
+#             bestLength = length
+#             bestRoute = route
+#         }
+#     END FOR
+
+#     // Evaporate
+#     FOR every pair (i, j) {
+#         pheromone[i][j] ← pheromone[i][j] × (1 − evaporation)
+#     }
+
+#     // Deposit
+#     FOR EACH (route, length) IN routes {
+#         deposit ← 1 / length
+#         FOR EACH consecutive pair (a, b) IN route, including last → home {
+#             pheromone[a][b] ← pheromone[a][b] + deposit
+#             pheromone[b][a] ← pheromone[b][a] + deposit
+#         }
+#     }
+# }
+
+# RETURN bestRoute, bestLength
 
 
 def nearest_neighbor_tsp(nodeList: list[Node]):
