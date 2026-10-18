@@ -17,11 +17,11 @@ CamOffsets = pygame.Vector2(width / -2, height / -2)
 random.seed(None)
 
 mapSize = pygame.Vector2(800, 800)
-nodeCount = 10
+nodeCount = 100
 nodeSize = 5
 
 # Benchmark settings
-benchmarkMode = True
+benchmarkMode = False
 benchmarkStartNodeCount = 1 #Start
 benchmarkEndNodeCount = 100 #Stop
 benchmarkStepCount = 1 #Step

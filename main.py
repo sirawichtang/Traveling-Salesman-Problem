@@ -8,10 +8,11 @@ import gameSystem
 from benchmark import run_benchmarks
 
 ALGORITHMS = (
-    ("Brute Force", algorithm.brute_force_tsp, {}),
+    # ("Brute Force", algorithm.brute_force_tsp, {}),
     ("Nearest Neighbor", algorithm.nearest_neighbor_tsp, {}),
-    ("Held-Karp", algorithm.held_karp_tsp, {}),
+    # ("Held-Karp", algorithm.held_karp_tsp, {}),
     ("two-opt", algorithm.two_opt_tsp, {}),
+    ("greedy_tsp", algorithm.greedy_tsp, {}),
     # ("ACO (30 iterations)", algorithm.ant_colony_tsp, {"iterations": 30}),
     # ("ACO (25 iterations)", algorithm.ant_colony_tsp, {"iterations": 25}),
     ("ACO (20 iterations)", algorithm.ant_colony_tsp, {"iterations": 20}),

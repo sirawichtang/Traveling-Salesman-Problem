@@ -382,3 +382,56 @@ def two_opt_tsp(nodeList):
             pygame.quit()
 
     return best_route, best_length, iterationCount
+
+def greedy_tsp(nodeList):
+    """
+    Greedy heuristic: from the current city, scan its row of the distance
+    matrix and move to the cheapest unvisited city. O(n^2), not optimal.
+    Returns (best_route, best_length, iterationCount).
+    """
+    home_index = next(i for i, n in enumerate(nodeList) if n.ID == 0)
+    node_total = len(nodeList)
+
+    # Build the distance matrix tsp[i][j]
+    tsp = [
+        [nodeList[i].location.distance_to(nodeList[j].location) for j in range(node_total)]
+        for i in range(node_total)
+    ]
+
+    # Start from the home city
+    visited = [False] * node_total
+    visited[home_index] = True
+    route_indices = [home_index]
+    route = [nodeList[home_index]]
+    total = 0
+    iterationCount = 0
+
+    i = home_index
+    while len(route_indices) < node_total:
+        min_cost = math.inf
+        next_index = None
+
+        # Check all paths from the ith city, keep the cheapest unvisited one
+        for j in range(node_total):
+            if j != i and not visited[j] and tsp[i][j] < min_cost:
+                min_cost = tsp[i][j]
+                next_index = j
+
+        total += min_cost
+        visited[next_index] = True
+        route_indices.append(next_index)
+        i = next_index
+        iterationCount += 1
+
+        route = [nodeList[k] for k in route_indices]
+
+        # Draw the current route (length includes the trip back home).
+        draw(nodeList, route, iterationCount, "Greedy", total + tsp[i][home_index], False)
+
+        if gameSystem.quitInterrupt():
+            pygame.quit()
+
+    # Return to the city we started from
+    total += tsp[i][home_index]
+
+    return route, total, iterationCount
